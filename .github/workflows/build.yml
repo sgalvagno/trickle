@@ -1,0 +1,54 @@
+name: Build and Test Trickle
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y build-essential libevent-dev autoconf
+
+      - name: Configure & Build
+        run: |
+          autoreconf -i
+          ./configure
+          make
+
+    #   - name: Run Tests
+    #     run: make check
+
+      - name: Archive Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: trickle-binary
+          path: src/trickle
+
+    release:
+        runs-on: ubuntu-latest
+        needs: package
+        if: github.ref == 'refs/heads/main'
+
+        steps:
+        - name: Download Debian Package
+            uses: actions/download-artifact@v4
+            with:
+            name: trickle-ubuntu.deb
+            path: .
+
+        - name: Create GitHub Release
+            uses: softprops/action-gh-release@v2
+            with:
+            tag_name: v1.0.${{ github.run_number }}
+            name: Trickle v1.0.${{ github.run_number }}
+            draft: false
+            prerelease: false
+            files: trickle-ubuntu.deb
