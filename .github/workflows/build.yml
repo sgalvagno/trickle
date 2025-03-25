@@ -15,9 +15,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: foo step
-        run: echo do nothing
-
       - name: Install dependencies
         run: |
           sudo apt update
@@ -47,8 +44,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: sudo apt update && sudo apt install -y build-essential libevent-dev autoconf fakeroot dpkg-dev
-
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential libevent-dev autoconf libtirpc-dev fakeroot dpkg-dev
+  
       - name: Build Trickle
         run: |
           autoreconf -i
