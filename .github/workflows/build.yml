@@ -15,6 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: foo step
+        run: echo do nothing
+
       - name: Install dependencies
         run: |
           sudo apt update
