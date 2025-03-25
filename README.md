@@ -36,6 +36,12 @@ Install
 
     rpmbuild -ta trickle-1.07.tar.gz
 
+Release
+-------
+Download deb in the releases section.
+and install it with:
+   sudo dpkg -i trickle-ubuntu.deb
+
 Documentation
 -------------
 
