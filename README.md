@@ -40,7 +40,8 @@ Release
 -------
 Download deb in the releases section.
 and install it with:
-   sudo dpkg -i trickle-ubuntu.deb
+
+    sudo dpkg -i trickle-ubuntu.deb
 
 Documentation
 -------------
