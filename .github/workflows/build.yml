@@ -1,4 +1,4 @@
-name: Build and Test Trickle
+name: Build and Release Trickle
 
 on:
   push:
@@ -23,8 +23,8 @@ jobs:
           ./configure
           make
 
-    #   - name: Run Tests
-    #     run: make check
+      - name: Run Tests
+        run: make check
 
       - name: Archive Build Artifacts
         uses: actions/upload-artifact@v4
@@ -32,23 +32,68 @@ jobs:
           name: trickle-binary
           path: src/trickle
 
-    release:
-        runs-on: ubuntu-latest
-        needs: package
-        if: github.ref == 'refs/heads/main'
+  package:
+    runs-on: ubuntu-latest
+    needs: build
 
-        steps:
-        - name: Download Debian Package
-            uses: actions/download-artifact@v4
-            with:
-            name: trickle-ubuntu.deb
-            path: .
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-        - name: Create GitHub Release
-            uses: softprops/action-gh-release@v2
-            with:
-            tag_name: v1.0.${{ github.run_number }}
-            name: Trickle v1.0.${{ github.run_number }}
-            draft: false
-            prerelease: false
-            files: trickle-ubuntu.deb
+      - name: Install dependencies
+        run: sudo apt update && sudo apt install -y build-essential libevent-dev autoconf fakeroot dpkg-dev
+
+      - name: Build Trickle
+        run: |
+          autoreconf -i
+          ./configure
+          make
+
+      - name: Create Debian Package
+        run: |
+          mkdir -p package/DEBIAN
+          mkdir -p package/usr/local/bin
+
+          # Fichier de contrôle Debian
+          cat <<EOF > package/DEBIAN/control
+          Package: trickle
+          Version: 1.0
+          Section: net
+          Priority: optional
+          Architecture: amd64
+          Maintainer: ${{ github.actor }} <no-reply@github.com>
+          Description: Trickle - A lightweight userspace bandwidth shaper
+          EOF
+
+          # Copier le binaire
+          cp src/trickle package/usr/local/bin/
+
+          # Construire le .deb
+          dpkg-deb --build package trickle-ubuntu.deb
+
+      - name: Upload Debian Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: trickle-ubuntu.deb
+          path: trickle-ubuntu.deb
+
+  release:
+    runs-on: ubuntu-latest
+    needs: package
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download Debian Package
+        uses: actions/download-artifact@v4
+        with:
+          name: trickle-ubuntu.deb
+          path: .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Trickle v1.0.${{ github.run_number }}
+          draft: false
+          prerelease: false
+          files: trickle-ubuntu.deb
